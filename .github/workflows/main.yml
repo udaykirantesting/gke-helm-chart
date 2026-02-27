@@ -18,7 +18,7 @@ env:
   IMAGE_TAG: ${{ github.sha }}
   HELM_RELEASE_NAME: python-app
   HELM_NAMESPACE: default
-  WORKLOAD_IDENTITY_PROVIDER: projects/553423796220/locations/global/workloadIdentityPools/sa-github-pool/providers/github-provider
+  WORKLOAD_IDENTITY_PROVIDER: projects/553423796220/locations/global/workloadIdentityPools/ghpool/providers/github-provider
   SERVICE_ACCOUNT: github-actions@buoyant-site-480804-k1.iam.gserviceaccount.com
   
 
