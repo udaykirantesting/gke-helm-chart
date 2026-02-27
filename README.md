@@ -1,5 +1,43 @@
 # gke-helm-chart
+=====working steps uday=====
 
+1.Set up the Identity Pool: 
+
+
+1.$ gcloud iam workload-identity-pools create "ghpool" \
+    --project="buoyant-site-480804-k1" \
+    --location="global" \
+    --display-name="GitHub Actions Workload Identity Pool"
+
+2. $ gcloud iam workload-identity-pools providers create-oidc "github-provider" \
+    --project="buoyant-site-480804-k1" \
+    --location="global" \
+    --workload-identity-pool="ghpool" \
+    --display-name="GitHub OIDC Provider" \
+    --issuer-uri="https://token.actions.githubusercontent.com" \
+    --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository" \
+    --attribute-condition="attribute.repository=='udaykirantesting/gke-helm-chart'"
+
+
+2.1 this step to get pool id 
+ export POOL_ID=$(gcloud iam workload-identity-pools describe "ghpool" \
+  --location="global" --format="value(name)" --project="buoyant-site-480804-k1 ")
+
+
+echo "${POOL_ID}"
+
+
+3.sample command we need to replace 
+Bind GitHub to the service account: gcloud iam service-accounts add-iam-policy-binding "gha-cloudrun-deployer@iapvm123.iam.gserviceaccount.com" \ --role="roles/iam.workloadIdentityUser" \ --member="principalSet://iam.googleapis.com/${POOL_ID}/attribute.repository/lucasFernandesj/cicd" \ --project="iapvm123"
+
+
+$gcloud iam service-accounts add-iam-policy-binding "github-actions@buoyant-site-480804-k1.iam.gserviceaccount.com" \
+--role="roles/iam.workloadIdentityUser" \
+--member="principalSet://iam.googleapis.com/projects/553423796220/locations/global/workloadIdentityPools/ghpool/attribute.repository/udaykirantesting/gke-helm-chart" \
+--project="buoyant-site-480804-k1"
+
+
+=======
 This is used for sending the service account key alert notification through github actions
 
 ->Firstly we need to enable the required API's gcloud services enable iam.googleapis.com
