@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: us-central1-docker.pkg.dev/gcp-test-472411/helm-repo/python-app
+  repository: us-central1-docker.pkg.dev/buoyant-site-480804-k1/helm-repo/python-app
   tag: "latest"
   pullPolicy: Always
 
