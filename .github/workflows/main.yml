@@ -1,0 +1,69 @@
+name: Deploy to GKE with Helm (Keyless)
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  GCP_PROJECT_ID: buoyant-site-480804-k1 
+  GCP_REGION: us-central1
+  GCP_ZONE: us-central1-a
+  GKE_CLUSTER_NAME: autopilot-cluster-1
+  GCP_REPO: helm-repo
+  IMAGE_NAME: python-app
+  IMAGE_TAG: ${{ github.sha }}
+  HELM_RELEASE_NAME: python-app
+  HELM_NAMESPACE: default
+  WORKLOAD_IDENTITY_PROVIDER: projects/553423796220/locations/global/workloadIdentityPools/sa-github-pool/providers/github-provider
+  SERVICE_ACCOUNT: github-actions@buoyant-site-480804-k1.iam.gserviceaccount.com
+  
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - id: auth
+      name: Authenticate to GCP via Workload Identity Federation
+      uses: google-github-actions/auth@v3
+      with:
+        workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+        service_account: ${{ env.SERVICE_ACCOUNT }}
+
+    - name: Configure Docker auth
+      run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+
+    - name: Build & push Docker image
+      run: |
+        IMAGE="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_REPO }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}"
+        docker build -t $IMAGE .
+        docker push $IMAGE
+
+    - name: Get GKE credentials
+      uses: google-github-actions/get-gke-credentials@v3
+      with:
+        cluster_name: ${{ env.GKE_CLUSTER_NAME }}
+        location: ${{ env.GCP_REGION }}
+        project_id: ${{ env.GCP_PROJECT_ID }}
+
+    - name: Install Helm
+      run: |
+        curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+    - name: Deploy via Helm
+      run: |
+        helm upgrade --install ${{ env.HELM_RELEASE_NAME }} ./python-app \
+        --set image.repository=${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_REPO }}/${{ env.IMAGE_NAME }} \
+        --set image.tag=${{ env.IMAGE_TAG }} \
+        --namespace ${{ env.HELM_NAMESPACE }}
+      
+    - name: Force rollout restart
+      run: |
+        kubectl rollout restart deployment ${{ env.HELM_RELEASE_NAME }} -n ${{ env.HELM_NAMESPACE }}
