@@ -9,7 +9,7 @@ permissions:
   id-token: write
 
 env:
-  GCP_PROJECT_ID: gcp-test-472411
+  GCP_PROJECT_ID: buoyant-site-480804-k1 
   GCP_REGION: us-central1
   GCP_ZONE: us-central1-a
   GKE_CLUSTER_NAME: autopilot-cluster-1
@@ -18,8 +18,9 @@ env:
   IMAGE_TAG: ${{ github.sha }}
   HELM_RELEASE_NAME: python-app
   HELM_NAMESPACE: default
-  WORKLOAD_IDENTITY_PROVIDER: projects/410150718166/locations/global/workloadIdentityPools/pool1/providers/github-provider3
-  SERVICE_ACCOUNT: github-actions@gcp-test-472411.iam.gserviceaccount.com
+  WORKLOAD_IDENTITY_PROVIDER: projects/553423796220/locations/global/workloadIdentityPools/sa-github-pool/providers/github-provider
+  SERVICE_ACCOUNT: github-actions@buoyant-site-480804-k1.iam.gserviceaccount.com
+  
 
 jobs:
   build-deploy:
